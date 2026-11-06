@@ -21,9 +21,39 @@
 /* ------------------------------------------------------------------------- */
 void attention(const float *Q, const float *K, const float *V, float *O, int N, int d)
 {
-    (void)Q; (void)K; (void)V; (void)O; (void)N; (void)d;
-    printf("attn_best: not implemented yet\n");
-    exit(0); /* no output file is written, so `make check` skips this variant */
+    const float scale = 1.0f / sqrtf((float)d);
+    float *weights = malloc((size_t)N * sizeof(float));
+    if (!weights)
+        return;
+
+    for (int i = 0; i < N; i++) {
+        const float *q = Q + (size_t)i * d;
+        float max = -INFINITY;
+        for (int j = 0; j < N; j++) {
+            const float *krow = K + (size_t)j * d;
+            float score = 0.0f;
+#pragma omp simd reduction(+:score)
+            for (int k = 0; k < d; k++)
+                score += q[k] * krow[k];
+            score *= scale;
+            weights[j] = score;
+            if (score > max)
+                max = score;
+        }
+        float sum = 0.0f;
+        for (int j = 0; j < N; j++) {
+            weights[j] = expf(weights[j] - max);
+            sum += weights[j];
+        }
+        for (int k = 0; k < d; k++) {
+            float acc = 0.0f;
+#pragma omp simd reduction(+:acc)
+            for (int j = 0; j < N; j++)
+                acc += weights[j] * V[(size_t)j * d + k];
+            O[(size_t)i * d + k] = acc / sum;
+        }
+    }
+    free(weights);
 }
 
 /* ------------------------------------------------------------------------- */

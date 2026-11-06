@@ -1,30 +1,28 @@
 # Machine specification (Q1). Fill in every field; give units. Fill in N/A if not applicable.
 
-CPU model                       :
-Microarchitecture               :
-Physical cores                  :
-Logical cores (hardware threads):
-Performance / efficiency cores  :
-Base clock (GHz)                :
-Max single-core clock (GHz)     :
-All-core clock under load (GHz) :
-SIMD instruction set and width  :
-FMA units per core              :
-Vector registers per core       :
-L1 data cache (per core)        :
-L2 cache (size, shared by)      :
-L3 cache (size, shared by)      :
-Cache line size (bytes)         :
-RAM size (GB)                   :
-RAM type, speed (MT/s), channels:
-Operating system                :
-Compiler and version            :
+CPU model                       : 11th Gen Intel Core i5-1135G7 @ 2.40 GHz
+Microarchitecture               : Tiger Lake
+Physical cores                  : 4
+Logical cores (hardware threads): 8
+Performance / efficiency cores  : 4 performance, 0 efficiency
+Base clock (GHz)                : 2.40
+Max single-core clock (GHz)     : 4.20
+All-core clock under load (GHz) : approximately 3.80
+SIMD instruction set and width  : AVX2, 256-bit (8 FP32 lanes)
+FMA units per core              : 2
+Vector registers per core       : 16 YMM registers
+L1 data cache (per core)        : 48 KiB
+L2 cache (size, shared by)      : 1.25 MiB, private per core
+L3 cache (size, shared by)      : 8 MiB, shared
+Cache line size (bytes)         : 64
+RAM size (GB)                   : 16
+RAM type, speed (MT/s), channels: DDR4-3200, dual channel
+Operating system                : Windows
+Compiler and version            : GCC 13.1.0 (MSYS2 UCRT64)
 
-# Derived (show the calculation in report.pdf)
-Peak FP32 GFLOP/s, one core     :
-Peak FP32 GFLOP/s, all cores    :
-Memory bandwidth (GB/s)         :
-Ridge point, one core (FLOP/B)  :
-Ridge point, all cores (FLOP/B) :
-
-
+# Derived (The calculation is in report.pdf)
+Peak FP32 GFLOP/s, one core     : 134.4 (4.20 GHz x 8 lanes x 2 FLOP/FMA x 2 units)
+Peak FP32 GFLOP/s, all cores    : 537.6 (134.4 x 4 cores)
+Memory bandwidth (GB/s)         : 51.2 theoretical (3200 MT/s x 8 B x 2 channels)
+Ridge point, one core (FLOP/B)  : 2.63 (134.4 / 51.2)
+Ridge point, all cores (FLOP/B) : 10.5 (537.6 / 51.2)

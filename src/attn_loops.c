@@ -21,9 +21,46 @@
 /* ------------------------------------------------------------------------- */
 void attention(const float *Q, const float *K, const float *V, float *O, int N, int d)
 {
-    (void)Q; (void)K; (void)V; (void)O; (void)N; (void)d;
-    printf("attn_loops: not implemented yet\n");
-    exit(0); /* no output file is written, so `make check` skips this variant */
+    const float scale = 1.0f / sqrtf((float)d);
+    float *S = malloc((size_t)N * N * sizeof(float));
+    if (!S)
+        return;
+
+    for (int i = 0; i < N; i++) {
+        float *row = S + (size_t)i * N;
+        for (int j = 0; j < N; j++)
+            row[j] = 0.0f;
+        for (int k = 0; k < d; k++) {
+            const float q = Q[(size_t)i * d + k];
+            for (int j = 0; j < N; j++)
+                row[j] += q * K[(size_t)j * d + k];
+        }
+        for (int j = 0; j < N; j++)
+            row[j] *= scale;
+
+        float max = row[0];
+        for (int j = 1; j < N; j++)
+            if (row[j] > max)
+                max = row[j];
+        float sum = 0.0f;
+        for (int j = 0; j < N; j++) {
+            row[j] = expf(row[j] - max);
+            sum += row[j];
+        }
+        for (int j = 0; j < N; j++)
+            row[j] /= sum;
+    }
+
+    for (int i = 0; i < N; i++) {
+        const float *row = S + (size_t)i * N;
+        for (int k = 0; k < d; k++) {
+            float acc = 0.0f;
+            for (int j = 0; j < N; j++)
+                acc += row[j] * V[(size_t)j * d + k];
+            O[(size_t)i * d + k] = acc;
+        }
+    }
+    free(S);
 }
 
 /* ------------------------------------------------------------------------- */

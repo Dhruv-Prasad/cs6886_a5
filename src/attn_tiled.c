@@ -21,9 +21,50 @@
 /* ------------------------------------------------------------------------- */
 void attention(const float *Q, const float *K, const float *V, float *O, int N, int d)
 {
-    (void)Q; (void)K; (void)V; (void)O; (void)N; (void)d;
-    printf("attn_tiled: not implemented yet\n");
-    exit(0); /* no output file is written, so `make check` skips this variant */
+    const float scale = 1.0f / sqrtf((float)d);
+    const int B = 32;
+    float *S = malloc((size_t)N * N * sizeof(float));
+    if (!S)
+        return;
+    memset(S, 0, (size_t)N * N * sizeof(float));
+
+    for (int ii = 0; ii < N; ii += B)
+        for (int jj = 0; jj < N; jj += B)
+            for (int kk = 0; kk < d; kk += B)
+                for (int i = ii; i < N && i < ii + B; i++)
+                    for (int k = kk; k < d && k < kk + B; k++) {
+                        const float q = Q[(size_t)i * d + k];
+                        for (int j = jj; j < N && j < jj + B; j++)
+                            S[(size_t)i * N + j] += q * K[(size_t)j * d + k];
+                    }
+    for (int i = 0; i < N; i++) {
+        float *row = S + (size_t)i * N;
+        for (int j = 0; j < N; j++)
+            row[j] *= scale;
+        float max = row[0];
+        for (int j = 1; j < N; j++)
+            if (row[j] > max)
+                max = row[j];
+        float sum = 0.0f;
+        for (int j = 0; j < N; j++) {
+            row[j] = expf(row[j] - max);
+            sum += row[j];
+        }
+        for (int j = 0; j < N; j++)
+            row[j] /= sum;
+    }
+
+    for (int ii = 0; ii < N; ii += B)
+        for (int kk = 0; kk < d; kk += B)
+            for (int i = ii; i < N && i < ii + B; i++)
+                for (int k = kk; k < d && k < kk + B; k++) {
+                    float acc = 0.0f;
+                    for (int jj = 0; jj < N; jj += B)
+                        for (int j = jj; j < N && j < jj + B; j++)
+                            acc += S[(size_t)i * N + j] * V[(size_t)j * d + k];
+                    O[(size_t)i * d + k] = acc;
+                }
+    free(S);
 }
 
 /* ------------------------------------------------------------------------- */

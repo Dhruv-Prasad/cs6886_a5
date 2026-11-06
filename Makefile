@@ -5,6 +5,7 @@
 CC = clang
 
 CFLAGS = -O3 -march=native
+SIMD   = -fopenmp-simd
 OMP    = -fopenmp
 INPUTS = $(wildcard input/*.bin)
 
@@ -15,9 +16,14 @@ INPUTS = $(wildcard input/*.bin)
 
 all: naive loops tiled fused best omp
 
-naive loops tiled fused best:
+naive loops tiled fused:
 	@mkdir -p build output; rm -f build/$@ output/$@_*
 	-$(CC) $(CFLAGS) -o build/$@ src/attn_$@.c -lm
+	-@for f in $(INPUTS); do [ -x build/$@ ] && ./build/$@ $$f output/$@_`basename $$f`; done; true
+
+best:
+	@mkdir -p build output; rm -f build/$@ output/$@_*
+	-$(CC) $(CFLAGS) $(SIMD) -o build/$@ src/attn_$@.c -lm
 	-@for f in $(INPUTS); do [ -x build/$@ ] && ./build/$@ $$f output/$@_`basename $$f`; done; true
 
 omp:
